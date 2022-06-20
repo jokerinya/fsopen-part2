@@ -1,5 +1,6 @@
-import axios from 'axios';
 import { useState, useEffect } from 'react';
+
+import personsService from './services/persons';
 import Filter from './components/Filter';
 import PersonForm from './components/PersonForm';
 import Persons from './components/Persons';
@@ -11,8 +12,7 @@ const App = () => {
     const [nameFilter, setNameFilter] = useState('');
 
     useEffect(() => {
-        axios.get('http://localhost:3001/persons').then((response) => {
-            const personsFetched = response.data;
+        personsService.getAll().then((personsFetched) => {
             setPersons(personsFetched);
             console.log(personsFetched);
         });
@@ -22,9 +22,9 @@ const App = () => {
     const handleNumberChange = (event) => setNewNumber(event.target.value);
     const handleNameFilterChange = (event) => setNameFilter(event.target.value);
 
-    const checkEqualityOfNames = () => {
+    const nameIsAdded = () => {
         const hasAlreadyAdded = persons.find(
-            (person) => person.name === newName
+            (person) => person.name.toLowerCase() === newName.toLowerCase()
         );
         // returns true if there is an obj
         return !!hasAlreadyAdded;
@@ -32,19 +32,55 @@ const App = () => {
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        if (checkEqualityOfNames()) {
-            alert(`${newName} has already added to phonebook`);
+        if (nameIsAdded()) {
+            const response = window.confirm(
+                `${newName} has already added to phonebook, replace the old number with a new one?`
+            );
+            if (!response) return;
+            // user wants to update the number
+            const existingPerson = persons.find(
+                (person) => person.name === newName
+            );
+            const newPerson = { ...existingPerson, number: newNumber };
+            personsService
+                .update(newPerson.id, newPerson)
+                .then((updatedPerson) => {
+                    setPersons(
+                        persons.map((person) =>
+                            person.id !== updatedPerson.id
+                                ? person
+                                : updatedPerson
+                        )
+                    );
+                });
             return;
         }
         const newPerson = {
             name: newName,
             number: newNumber,
-            id: persons.length + 1,
+            id: Math.random() + '',
         };
 
-        setPersons([...persons, newPerson]);
-        setNewName('');
-        setNewNumber('');
+        personsService.create(newPerson).then((newAddedPerson) => {
+            setPersons([...persons, newAddedPerson]);
+            setNewName('');
+            setNewNumber('');
+        });
+    };
+
+    const handleDeletePerson = (id) => {
+        const deletedPerson = persons.find((person) => person.id === id);
+        if (
+            window.confirm(
+                `Do you really want to delete ${deletedPerson.name}'s info?`
+            )
+        ) {
+            personsService.deletePerson(id).then((emptyObj) => {
+                setPersons(
+                    persons.filter((person) => person.id !== deletedPerson.id)
+                );
+            });
+        }
     };
 
     const personsToShow = persons.filter((person) => {
@@ -60,14 +96,17 @@ const App = () => {
             <PersonForm
                 onFormSubmit={handleSubmit}
                 newNameValue={newName}
-                handleNameChange={handleNameChange}
+                onNameChange={handleNameChange}
                 newNumberValue={newNumber}
-                handleNumberChange={handleNumberChange}
+                onNumberChange={handleNumberChange}
             />
 
             <h2>Numbers</h2>
             <ul>
-                <Persons persons={personsToShow} />
+                <Persons
+                    persons={personsToShow}
+                    onDeletePerson={handleDeletePerson}
+                />
             </ul>
         </div>
     );

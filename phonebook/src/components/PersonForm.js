@@ -3,20 +3,20 @@ import React from 'react';
 const PersonForm = ({
     onFormSubmit,
     newNameValue,
-    handleNameChange,
+    onNameChange,
     newNumberValue,
-    handleNumberChange,
+    onNumberChange,
 }) => {
     return (
         <form onSubmit={onFormSubmit}>
             <div>
-                name: <input value={newNameValue} onChange={handleNameChange} />
+                name: <input value={newNameValue} onChange={onNameChange} />
             </div>
             <div>
                 number:{' '}
                 <input
                     value={newNumberValue}
-                    onChange={handleNumberChange}
+                    onChange={onNumberChange}
                     type='number'
                 />
             </div>

@@ -4,17 +4,18 @@ import personsService from './services/persons';
 import Filter from './components/Filter';
 import PersonForm from './components/PersonForm';
 import Persons from './components/Persons';
+import Notification from './components/Notification';
 
 const App = () => {
     const [persons, setPersons] = useState([]);
     const [newName, setNewName] = useState('');
     const [newNumber, setNewNumber] = useState('');
     const [nameFilter, setNameFilter] = useState('');
+    const [message, setMessage] = useState({ type: null, content: null });
 
     useEffect(() => {
         personsService.getAll().then((personsFetched) => {
             setPersons(personsFetched);
-            console.log(personsFetched);
         });
     }, []);
 
@@ -52,19 +53,26 @@ const App = () => {
                                 : updatedPerson
                         )
                     );
+                    setMessage({
+                        type: 'success',
+                        content: `Updated ${newPerson.name}`,
+                    });
+                    clearNotification();
                 });
             return;
         }
         const newPerson = {
             name: newName,
             number: newNumber,
-            id: Math.random() + '',
+            id: (Math.random() + '').substring(2),
         };
 
         personsService.create(newPerson).then((newAddedPerson) => {
             setPersons([...persons, newAddedPerson]);
             setNewName('');
             setNewNumber('');
+            setMessage({ type: 'success', content: `Added ${newPerson.name}` });
+            clearNotification();
         });
     };
 
@@ -75,11 +83,27 @@ const App = () => {
                 `Do you really want to delete ${deletedPerson.name}'s info?`
             )
         ) {
-            personsService.deletePerson(id).then((emptyObj) => {
-                setPersons(
-                    persons.filter((person) => person.id !== deletedPerson.id)
-                );
-            });
+            personsService
+                .deletePerson(id)
+                .then((emptyObj) => {
+                    setPersons(
+                        persons.filter(
+                            (person) => person.id !== deletedPerson.id
+                        )
+                    );
+                    setMessage({
+                        type: 'success',
+                        content: `Information of ${deletedPerson.name} has been removed successfully`,
+                    });
+                    clearNotification();
+                })
+                .catch((error) => {
+                    setMessage({
+                        type: 'error',
+                        content: `Information of ${deletedPerson.name} has already been removed from server`,
+                    });
+                    clearNotification();
+                });
         }
     };
 
@@ -87,9 +111,15 @@ const App = () => {
         return person.name.toLowerCase().includes(nameFilter.toLowerCase());
     });
 
+    const clearNotification = () => {
+        setTimeout(() => {
+            setMessage({ type: null, content: null });
+        }, 5000);
+    };
     return (
         <div>
             <h2>Phonebook</h2>
+            <Notification message={message} />
             <Filter value={nameFilter} onChange={handleNameFilterChange} />
 
             <h2>Add a new</h2>

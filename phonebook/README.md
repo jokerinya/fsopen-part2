@@ -103,7 +103,10 @@ Expand your application by allowing users to add phone numbers to the phone book
 ```
 
 At this point the application could look something like this. The image also displays the application's state with the help of React developer tools:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 8f974a8c71ea71f64d8edb4a570c02a2bd003852
 ![Devtools](./readmeimg/12e.png)
 
 ## 2.9\*: The Phonebook Step4
